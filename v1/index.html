@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор курсов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1976d2;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #1565c0;
+        }
+        .test {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Конструктор курсов</h1>
+</header>
+<div class="container">
+    <h2>Создание нового курса</h2>
+    <div id="courseForm">
+        <div class="form-group">
+            <label for="courseTitle">Название курса:</label>
+            <input type="text" id="courseTitle" required>
+        </div>
+        <div class="form-group">
+            <button onclick="showTextForm()">Добавить текст</button>
+            <div id="textForm" class="hidden">
+                <label for="courseContent">Текстовое содержимое курса:</label>
+                <textarea id="courseContent" rows="4" placeholder="Введите текст..."></textarea>
+                <button onclick="addTextContent()">Добавить текст</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <button onclick="showImageForm()">Добавить изображение</button>
+            <div id="imageForm" class="hidden">
+                <label for="courseImage">Загрузить изображение:</label>
+                <input type="file" id="courseImage" accept="image/*">
+                <button onclick="addImageContent()">Добавить изображение</button>
+            </div>
+        </div>
+    </div>
+    <button onclick="createCourse()">Завершить создание курса</button>
+
+    <h2>Список курсов</h2>
+    <div id="coursesContainer">
+        <!-- Курсы будут добавляться сюда -->
+    </div>
+    <a href="courses.html" target="_blank"><button>Перейти к списку курсов</button></a>
+</div>
+
+<script>
+    let courses = JSON.parse(localStorage.getItem('courses')) || [];
+
+    function showTextForm() {
+        document.getElementById('textForm').classList.remove('hidden');
+    }
+
+    function showImageForm() {
+        document.getElementById('imageForm').classList.remove('hidden');
+    }
+
+    function addTextContent() {
+        const title = document.getElementById('courseTitle').value;
+        const content = document.getElementById('courseContent').value;
+
+        if (!content) return;
+
+        const courseContentDiv = document.createElement('div');
+        courseContentDiv.className = 'test';
+
+        if (title) {
+            const titleElement = document.createElement('h3');
+            titleElement.textContent = title;
+            courseContentDiv.appendChild(titleElement);
+        }
+
+        const contentElement = document.createElement('p');
+        contentElement.textContent = content;
+        courseContentDiv.appendChild(contentElement);
+
+        document.getElementById('coursesContainer').appendChild(courseContentDiv);
+        clearForm(true);
+    }
+
+    function addImageContent() {
+        const title = document.getElementById('courseTitle').value;
+        const imageInput = document.getElementById('courseImage');
+        const imageFile = imageInput.files[0];
+
+        if (!imageFile) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const courseContentDiv = document.createElement('div');
+            courseContentDiv.className = 'test';
+
+            if (title) {
+                const titleElement = document.createElement('h3');
+                titleElement.textContent = title;
+                courseContentDiv.appendChild(titleElement);
+            }
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.maxWidth = '100%';
+            courseContentDiv.appendChild(img);
+
+            document.getElementById('coursesContainer').appendChild(courseContentDiv);
+            clearForm(false);
+        }
+        reader.readAsDataURL(imageFile);
+    }
+
+    function createCourse() {
+        const title = document.getElementById('courseTitle').value;
+        const content = document.getElementById('courseContent').value;
+
+        if (!title || !content) {
+            alert('Пожалуйста, заполните все необходимые поля.');
+            return;
+        }
+
+        const course = { title, content };
+        courses.push(course);
+        localStorage.setItem('courses', JSON.stringify(courses));
+        alert('Курс успешно создан!');
+        clearForm();
+    }
+
+    function clearForm(clearText = true) {
+        if (clearText) {
+            document.getElementById('courseContent').value = '';
+        }
+        document.getElementById('courseImage').value = '';
+        document.getElementById('textForm').classList.add('hidden');
+        document.getElementById('imageForm').classList.add('hidden');
+        document.getElementById('courseTitle').value = '';
+    }
+
+    function loadCourses() {
+        courses.forEach(course => {
+            const courseContentDiv = document.createElement('div');
+            courseContentDiv.className = 'test';
+
+            if (course.title) {
+                const titleElement = document.createElement('h3');
+                titleElement.textContent = course.title;
+                courseContentDiv.appendChild(titleElement);
+            }
+
+            if (course.content) {
+                const contentElement = document.createElement('p');
+                contentElement.textContent = course.content;
+                courseContentDiv.appendChild(contentElement);
+            }
+
+            document.getElementById('coursesContainer').appendChild(courseContentDiv);
+        });
+    }
+
+    loadCourses();
+</script>
+</body>
+</html>

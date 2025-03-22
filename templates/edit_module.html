@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать модуль - {{ module.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="mb-0">Редактировать модуль: {{ module.title }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Название модуля</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ module.title }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Содержимое модуля</label>
+                                <textarea class="form-control" id="content" name="content" 
+                                          rows="10" required>{{ module.content }}</textarea>
+                                <small class="text-muted">Вы можете использовать форматирование Markdown</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="order" class="form-label">Порядок модуля</label>
+                                <input type="number" class="form-control" id="order" name="order" 
+                                       value="{{ module.order }}" min="1" required>
+                            </div>
+
+                            <div class="tests-section mb-4">
+                                <h3>Тесты модуля</h3>
+                                {% if module.tests %}
+                                    {% for test in module.tests %}
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ test.title }}</h5>
+                                            <p class="text-muted">{{ test.questions|length }} вопросов</p>
+                                            <a href="{{ url_for('edit_test', test_id=test.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">Редактировать тест</a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted">Тесты еще не добавлены.</p>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('add_test', module_id=module.id) }}" 
+                                   class="btn btn-success">Добавить новый тест</a>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Обновить модуль</button>
+                                <a href="{{ url_for('edit_course', course_id=module.course_id) }}" 
+                                   class="btn btn-outline-secondary">Назад к курсу</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

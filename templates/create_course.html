@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Создание курса{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Создание нового курса</h2>
+    <form method="POST" action="{{ url_for('create_course') }}" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="title" class="form-label">Название курса</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">Изображение курса</label>
+            <input type="file" class="form-control" id="image" name="image">
+        </div>
+        
+        <div id="modules-container">
+            <div class="module-block card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>Модуль 1</h4>
+                        <button type="button" class="btn btn-danger btn-sm remove-module">Удалить модуль</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Название модуля</label>
+                        <input type="text" class="form-control" name="module_title[]" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание модуля</label>
+                        <textarea class="form-control" name="module_description[]" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="tests-container">
+                        <button type="button" class="btn btn-primary btn-sm add-test mb-2">Добавить тест</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button type="button" class="btn btn-secondary mb-3" id="add-module">Добавить модуль</button>
+        <button type="submit" class="btn btn-primary" style="margin-top: -16px;">Создать курс</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let moduleCount = 1;
+    
+    // Add new module
+    document.getElementById('add-module').addEventListener('click', function() {
+        moduleCount++;
+        const modulesContainer = document.getElementById('modules-container');
+        
+        const moduleBlock = document.createElement('div');
+        moduleBlock.className = 'module-block card mb-3';
+        moduleBlock.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4>Модуль ${moduleCount}</h4>
+                    <button type="button" class="btn btn-danger btn-sm remove-module">Удалить модуль</button>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Название модуля</label>
+                    <input type="text" class="form-control" name="module_title[]" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Описание модуля</label>
+                    <textarea class="form-control" name="module_description[]" rows="3" required></textarea>
+                </div>
+                
+                <div class="tests-container">
+                    <button type="button" class="btn btn-primary btn-sm add-test mb-2">Добавить тест</button>
+                </div>
+            </div>
+        `;
+        
+        modulesContainer.appendChild(moduleBlock);
+        
+        // Add event listeners
+        moduleBlock.querySelector('.remove-module').addEventListener('click', function() {
+            moduleBlock.remove();
+        });
+        
+        moduleBlock.querySelector('.add-test').addEventListener('click', function() {
+            const testBlock = createTestBlock(moduleCount);
+            const testsContainer = moduleBlock.querySelector('.tests-container');
+            testsContainer.insertBefore(testBlock, testsContainer.querySelector('.add-test'));
+            testBlock.style.display = 'block';
+            addTestEventListeners(testBlock, moduleCount);
+        });
+    });
+    
+    // Add event listener for remove module button in first module
+    document.querySelector('.remove-module').addEventListener('click', function() {
+        if (document.querySelectorAll('.module-block').length > 1) {
+            this.closest('.module-block').remove();
+        }
+    });
+    
+    // Add test to module
+    document.querySelectorAll('.add-test').forEach(button => {
+        button.addEventListener('click', function() {
+            const moduleBlock = this.closest('.module-block');
+            const moduleIndex = Array.from(document.querySelectorAll('.module-block')).indexOf(moduleBlock) + 1;
+            const testBlock = createTestBlock(moduleIndex);
+            const testsContainer = moduleBlock.querySelector('.tests-container');
+            testsContainer.insertBefore(testBlock, testsContainer.querySelector('.add-test'));
+            testBlock.style.display = 'block';
+            addTestEventListeners(testBlock, moduleIndex);
+        });
+    });
+    
+    function createTestBlock(moduleNum) {
+        const testBlock = document.createElement('div');
+        testBlock.className = 'test-block card mb-3';
+        testBlock.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4>Тест</h4>
+                    <button type="button" class="btn btn-danger btn-sm remove-test">Удалить тест</button>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Название теста</label>
+                    <input type="text" class="form-control" name="test_title_${moduleNum}" required>
+                </div>
+                
+                <div class="questions-container">
+                    <div class="question-block card mb-3">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Вопрос</label>
+                                <input type="text" class="form-control" name="question_text_${moduleNum}[]" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Правильный ответ</label>
+                                <input type="text" class="form-control" name="correct_answer_${moduleNum}[]" required>
+                            </div>
+                            <div class="options-container">
+                                <label class="form-label">Варианты</label>
+                                <div class="option-inputs">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="options_${moduleNum}_1[]" required>
+                                        <button type="button" class="btn btn-danger remove-option">×</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm add-option">Добавить вариант</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-info btn-sm add-question">Добавить вопрос</button>
+                </div>
+            </div>
+        `;
+        
+        return testBlock;
+    }
+    
+    function addTestEventListeners(testBlock, moduleNum) {
+        // Remove test
+        testBlock.querySelector('.remove-test').addEventListener('click', function() {
+            testBlock.remove();
+        });
+        
+        // Add option
+        testBlock.querySelectorAll('.add-option').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const optionsContainer = e.target.closest('.options-container');
+                const optionInputs = optionsContainer.querySelector('.option-inputs');
+                const questionBlock = optionsContainer.closest('.question-block');
+                const questionNum = Array.from(questionBlock.closest('.questions-container').querySelectorAll('.question-block')).indexOf(questionBlock) + 1;
+                
+                const newOption = document.createElement('div');
+                newOption.className = 'input-group mb-2';
+                newOption.innerHTML = `
+                    <input type="text" class="form-control" name="options_${moduleNum}_${questionNum}[]" required>
+                    <button type="button" class="btn btn-danger remove-option">×</button>
+                `;
+                
+                optionInputs.appendChild(newOption);
+                
+                newOption.querySelector('.remove-option').addEventListener('click', function() {
+                    newOption.remove();
+                });
+            });
+        });
+        
+        // Remove option
+        testBlock.querySelectorAll('.remove-option').forEach(button => {
+            button.addEventListener('click', function() {
+                const optionInput = this.closest('.input-group');
+                const optionInputs = optionInput.closest('.option-inputs');
+                if (optionInputs.querySelectorAll('.input-group').length > 1) {
+                    optionInput.remove();
+                }
+            });
+        });
+        
+        // Add question
+        testBlock.querySelector('.add-question').addEventListener('click', function() {
+            const questionsContainer = this.closest('.questions-container');
+            const questionNum = questionsContainer.querySelectorAll('.question-block').length + 1;
+            
+            const questionBlock = document.createElement('div');
+            questionBlock.className = 'question-block card mb-3';
+            questionBlock.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5>Вопрос ${questionNum}</h5>
+                        <button type="button" class="btn btn-danger btn-sm remove-question">Удалить вопрос</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Вопрос</label>
+                        <input type="text" class="form-control" name="question_text_${moduleNum}[]" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Правильный ответ</label>
+                        <input type="text" class="form-control" name="correct_answer_${moduleNum}[]" required>
+                    </div>
+                    <div class="options-container">
+                        <label class="form-label">Варианты</label>
+                        <div class="option-inputs">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" name="options_${moduleNum}_${questionNum}[]" required>
+                                <button type="button" class="btn btn-danger remove-option">×</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm add-option">Добавить вариант</button>
+                    </div>
+                </div>
+            `;
+            
+            questionsContainer.insertBefore(questionBlock, this);
+            
+            // Add event listeners for new question
+            const optionsContainer = questionBlock.querySelector('.options-container');
+            
+            optionsContainer.querySelector('.add-option').addEventListener('click', function(e) {
+                const optionInputs = optionsContainer.querySelector('.option-inputs');
+                
+                const newOption = document.createElement('div');
+                newOption.className = 'input-group mb-2';
+                newOption.innerHTML = `
+                    <input type="text" class="form-control" name="options_${moduleNum}_${questionNum}[]" required>
+                    <button type="button" class="btn btn-danger remove-option">×</button>
+                `;
+                
+                optionInputs.appendChild(newOption);
+                
+                newOption.querySelector('.remove-option').addEventListener('click', function() {
+                    newOption.remove();
+                });
+            });
+            
+            // Remove option
+            questionBlock.querySelectorAll('.remove-option').forEach(button => {
+                button.addEventListener('click', function() {
+                    const optionInput = this.closest('.input-group');
+                    const optionInputs = optionInput.closest('.option-inputs');
+                    if (optionInputs.querySelectorAll('.input-group').length > 1) {
+                        optionInput.remove();
+                    }
+                });
+            });
+            
+            // Remove question
+            questionBlock.querySelector('.remove-question').addEventListener('click', function() {
+                questionBlock.remove();
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

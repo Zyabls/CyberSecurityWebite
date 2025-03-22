@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create New Test</h2>
+    <form method="POST" action="{{ url_for('create_test', module_id=module_id) }}">
+        <div class="form-group mb-3">
+            <label for="title">Test Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+
+        <div id="questions-container">
+            <div class="question-block card mb-3">
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label>Question 1</label>
+                        <input type="text" class="form-control mb-2" name="questions[]" required>
+                        
+                        <div class="options-container">
+                            <div class="form-group mb-2">
+                                <label>Options</label>
+                                <div class="option-inputs">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="options_1[]" required>
+                                        <button type="button" class="btn btn-danger remove-option">×</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm add-option" data-question="1">
+                                    Add Option
+                                </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Correct Answer</label>
+                                <input type="text" class="form-control" name="correct_answers[]" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary mb-3" id="add-question">Add Question</button>
+        <button type="submit" class="btn btn-primary">Create Test</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let questionCount = 1;
+
+    // Add new question
+    document.getElementById('add-question').addEventListener('click', function() {
+        questionCount++;
+        const questionsContainer = document.getElementById('questions-container');
+        
+        const questionBlock = document.createElement('div');
+        questionBlock.className = 'question-block card mb-3';
+        questionBlock.innerHTML = `
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label>Question ${questionCount}</label>
+                        <button type="button" class="btn btn-danger btn-sm remove-question">Remove Question</button>
+                    </div>
+                    <input type="text" class="form-control mb-2" name="questions[]" required>
+                    
+                    <div class="options-container">
+                        <div class="form-group mb-2">
+                            <label>Options</label>
+                            <div class="option-inputs">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" name="options_${questionCount}[]" required>
+                                    <button type="button" class="btn btn-danger remove-option">×</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm add-option" data-question="${questionCount}">
+                                Add Option
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Correct Answer</label>
+                            <input type="text" class="form-control" name="correct_answers[]" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        questionsContainer.appendChild(questionBlock);
+        
+        // Add event listener for the new remove question button
+        questionBlock.querySelector('.remove-question').addEventListener('click', function() {
+            questionBlock.remove();
+        });
+        
+        // Add event listener for the new add option button
+        questionBlock.querySelector('.add-option').addEventListener('click', addOption);
+    });
+
+    // Function to add new option
+    function addOption(event) {
+        const questionNum = event.target.dataset.question;
+        const optionInputs = event.target.parentElement.querySelector('.option-inputs');
+        
+        const optionGroup = document.createElement('div');
+        optionGroup.className = 'input-group mb-2';
+        optionGroup.innerHTML = `
+            <input type="text" class="form-control" name="options_${questionNum}[]" required>
+            <button type="button" class="btn btn-danger remove-option">×</button>
+        `;
+        
+        optionInputs.appendChild(optionGroup);
+        
+        // Add event listener for the new remove option button
+        optionGroup.querySelector('.remove-option').addEventListener('click', function() {
+            optionGroup.remove();
+        });
+    }
+
+    // Add event listener for initial add option buttons
+    document.querySelectorAll('.add-option').forEach(button => {
+        button.addEventListener('click', addOption);
+    });
+
+    // Add event listener for initial remove option buttons
+    document.querySelectorAll('.remove-option').forEach(button => {
+        button.addEventListener('click', function() {
+            this.parentElement.remove();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }} - Платформа обучения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    {% include 'navbar.html' %}
+
+    <div class="container mt-5">
+        <!-- Заголовок курса -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    {% if course.image_path %}
+                    <img src="{{ url_for('static', filename=course.image_path) }}" 
+                         class="card-img-top" alt="{{ course.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h1 class="card-title">{{ course.title }}</h1>
+                                <p class="text-muted">Автор: {{ course.author.username }}</p>
+                            </div>
+                            <div>
+                                {% if is_author %}
+                                <a href="{{ url_for('edit_course', course_id=course.id) }}" 
+                                   class="btn btn-outline-primary">Редактировать курс</a>
+                                {% elif not is_enrolled %}
+                                <form action="{{ url_for('enroll_course', course_id=course.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-primary">Записаться на курс</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ course.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Содержание курса -->
+        {% if is_enrolled or is_author %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">Содержание курса</h3>
+                        {% if is_author %}
+                        <a href="{{ url_for('add_module', course_id=course.id) }}" 
+                           class="btn btn-light btn-sm">Добавить модуль</a>
+                        {% endif %}
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for module in course.modules %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ module.title }}
+                                    
+                                </h5>
+                                <p class="card-text">{{ module.content }}</p>
+                                
+                                {% if module.tests %}
+                                <h6 class="mt-3">Тесты:</h6>
+                                <ul class="list-unstyled">
+                                    {% for test in module.tests %}
+                                    <li>{{ test.title }}
+                                        {% if test.id in module.test_results %}
+                                            {% set result = module.test_results[test.id] %}
+                                            <span class="badge {% if result.score >= 70 %}bg-success{% else %}bg-warning{% endif %}">
+                                                Результат: {{ "%.1f"|format(result.score) }}%
+                                            </span>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('view_module', module_id=module.id) }}" 
+                                   class="btn btn-primary">Перейти к модулю</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">Запишитесь на курс для доступа к материалам</h4>
+            <p>Для доступа к учебным материалам и тестам необходимо записаться на курс.</p>
+            <form action="{{ url_for('enroll_course', course_id=course.id) }}" method="POST" class="mt-3">
+                <button type="submit" class="btn btn-primary">Записаться на курс</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
